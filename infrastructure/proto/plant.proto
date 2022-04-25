@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "github.com/glassgreenhouse/plants-service/proto";
+
+import "google/api/annotations.proto";
+
+service Plant {
+	rpc Hello(HelloRequest) returns (HelloResponse) {
+		option (google.api.http) = {
+			post: "/v1/hello"
+			body: "*"
+		};
+	}
+}
+
+message HelloRequest {
+	string name = 1;
+}
+
+message HelloResponse {
+	string greeting = 2;
+}
