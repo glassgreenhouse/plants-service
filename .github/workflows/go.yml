@@ -72,13 +72,13 @@ jobs:
       - name: unit test
         run: |
           go test -v ./... -covermode=count -coverprofile cover.out
-      - name: convert coverage.out to coverage.lcov
+      - name: convert cover.out to cover.lcov
         uses: jandelgado/gcov2lcov-action@v1.0.6
       - name: coveralls publish
         uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.coveralls }}
-          path-to-lcov: coverage.lcov
+          path-to-lcov: cover.lcov
       - uses: actions/cache@v3
         with:
           path: |
