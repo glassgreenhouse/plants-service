@@ -1,6 +1,7 @@
 # plants-service
  single plant registration record
 
+[![go](https://github.com/glassgreenhouse/plants-service/actions/workflows/go.yml/badge.svg)](https://github.com/glassgreenhouse/plants-service/actions/workflows/go.yml)
 
 Introduction
 ---

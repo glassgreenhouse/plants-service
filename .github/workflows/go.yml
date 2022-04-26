@@ -66,6 +66,14 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
       - name: install dependencies
         run: go get -v -u ./...
       - name: unit test
@@ -81,6 +89,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: cover.lcov
+
+  build:
+    name: build on go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ "1.18", "1.17", "1.16" ]
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
       - uses: actions/cache@v3
         with:
           path: |
@@ -89,19 +110,4 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-
-  # build:
-  #   name: build on go ${{ matrix.go }}
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       go: [ "1.18", "1.17", "1.16" ]
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     - name: set up go
-  #       uses: actions/setup-go@v3
-  #       with:
-  #         go-version: ${{ matrix.go }}
-  #     - name: build
-  #       run: go build -v ./...
+      - run: go build -v ./...
