@@ -26,11 +26,10 @@ jobs:
           go-version: "1.18"
       - name: install requires a plugin
         run: |
-          go install \
-            github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0 \
-            github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.10.0  \
-            google.golang.org/protobuf/cmd/protoc-gen-go@v1.26 \
-            google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0
+          go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.10.0
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
       - name: generate protobuf
         run: |
           protoc --proto_path=./infrastructure/proto \
@@ -41,41 +40,70 @@ jobs:
             --grpc-gateway_out ./infrastructure/proto \
             --grpc-gateway_opt paths=source_relative \
             infrastructure/proto/plant.proto
-
-  test:
-    name: test on go ${{ matrix.go }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: [ "1.18", "1.17", "1.16" ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: set up go
-        uses: actions/setup-go@v3
+      - uses: actions/cache@v3
         with:
-          go-version: ${{ matrix.go }}
-      - name: unit test
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles("**/go.sum") }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      # Get values for cache paths to be used in later steps
+      - id: go-cache-paths
         run: |
-          go test -v ./... -covermode=count -coverprofile cover.out
-      - name: convert coverage.out to coverage.lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.6
-      - name: coveralls publish
-        uses: coverallsapp/github-action@v1.1.2
-        with:
-          github-token: ${{ secrets.coveralls }}
-          path-to-lcov: coverage.lcov
+          echo "$(pwd)"
+          echo "::set-output name=go-build::$(go env GOCACHE)"
+          echo "::set-output name=go-mod::$(go env GOMODCACHE)"
 
-  build:
-    name: build on go ${{ matrix.go }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: [ "1.18", "1.17", "1.16" ]
-    steps:
-      - uses: actions/checkout@v3
-      - name: set up go
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ matrix.go }}
-      - name: build
-        run: go build -v ./...
+      # # Cache go build cache, used to speedup go test
+      # - name: go source cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ${{ steps.go-cache-paths.outputs.go-build }}
+      #     key: ${{ runner.os }}-go-build-${{ hashFiles('**/go.sum') }}
+
+      # # Cache go mod cache, used to speedup builds
+      # - name: Go Mod Cache
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: ${{ steps.go-cache-paths.outputs.go-mod }}
+      #     key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+
+  # test:
+  #   name: test on go ${{ matrix.go }}
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       go: [ "1.18", "1.17", "1.16" ]
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: set up go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ matrix.go }}
+  #     - name: unit test
+  #       run: |
+  #         go test -v ./... -covermode=count -coverprofile cover.out
+  #     - name: convert coverage.out to coverage.lcov
+  #       uses: jandelgado/gcov2lcov-action@v1.0.6
+  #     - name: coveralls publish
+  #       uses: coverallsapp/github-action@v1.1.2
+  #       with:
+  #         github-token: ${{ secrets.coveralls }}
+  #         path-to-lcov: coverage.lcov
+
+  # build:
+  #   name: build on go ${{ matrix.go }}
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       go: [ "1.18", "1.17", "1.16" ]
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: set up go
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ matrix.go }}
+  #     - name: build
+  #       run: go build -v ./...
