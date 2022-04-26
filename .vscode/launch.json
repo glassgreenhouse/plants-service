@@ -16,9 +16,9 @@
             "name": "kube::run",
             "type": "cloudcode.kubernetes",
             "request": "launch",
-            "skaffoldConfig": "${workspaceFolder}/skaffold.yaml",
-            "watch": true,
-            "cleanUp": false,
+            "skaffoldConfig": "${workspaceFolder}/.skaffold/skaffold.yaml",
+            "watch": false,
+            "cleanUp": true,
             "portForward": true,
             "imageRegistry": "registry:5000",
             "debug": [

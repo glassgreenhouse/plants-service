@@ -1,0 +1,54 @@
+name: go
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v1
+
+  test:
+    name: test on go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ "1.18", "1.17", "1.16" ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - name: unit test
+        run: |
+          go test -v ./... -covermode=count -coverprofile cover.out
+      - name: convert coverage.out to coverage.lcov
+        uses: jandelgado/gcov2lcov-action@v1.0.6
+      - name: coveralls publish
+        uses: coverallsapp/github-action@v1.1.2
+        with:
+          github-token: ${{ secrets.coveralls }}
+          path-to-lcov: coverage.lcov
+
+  build:
+    name: build on go ${{ matrix.go }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: [ "1.18", "1.17", "1.16" ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - name: build
+        run: go build -v ./...
