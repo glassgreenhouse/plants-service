@@ -10,6 +10,7 @@ import (
 	"glassgreenhouse.io/plants-service/infrastructure/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 )
@@ -71,7 +72,12 @@ func main() {
 
 	// Create a client connection to the gRPC server we just started
 	// This is where the gRPC-Gateway proxies the requests
-	conn, err := grpc.DialContext(context.Background(), "0.0.0.0"+port, grpc.WithBlock(), grpc.WithInsecure())
+	conn, err := grpc.DialContext(
+		context.Background(), 
+		"0.0.0.0"+port, 
+		grpc.WithBlock(), 
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 
 	if err != nil {
 		log.Fatalln("Failed to dial server:", err)
