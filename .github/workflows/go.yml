@@ -46,10 +46,9 @@ jobs:
             infrastructure/proto/plant.proto
       - uses: actions/cache@v3
         with:
-          path: ${{ steps.go-cache-paths.outputs.go-build }}
-          # path: |
-          #   ~/.cache/go-build
-          #   ~/go/pkg/mod
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
