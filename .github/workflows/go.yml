@@ -24,6 +24,10 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: "1.18"
+      - name: install protoc
+        uses: arduino/setup-protoc@v1
+        with:
+          version: "3.x"
       - name: install requires a plugin
         run: |
           go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0
