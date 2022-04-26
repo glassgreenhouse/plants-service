@@ -20,22 +20,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up go
-        uses: actions/setup-go@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: "1.18"
-      - name: install protoc
-        uses: arduino/setup-protoc@v1
+      - uses: arduino/setup-protoc@v1
         with:
           version: "3.x"
-      - name: install requires a plugin
-        run: |
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/work/plants-service/plants-service/infrastructure/proto
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - run: |
           go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.10.0
           go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.10.0
           go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
-      - name: generate protobuf
-        run: |
+      - run: |
           protoc --proto_path=./infrastructure/proto \
             --go_out=./infrastructure/proto \
             --go_opt=paths=source_relative \
@@ -44,14 +49,6 @@ jobs:
             --grpc-gateway_out ./infrastructure/proto \
             --grpc-gateway_opt paths=source_relative \
             infrastructure/proto/plant.proto
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
 
   test:
     name: test on go ${{ matrix.go }}
@@ -62,8 +59,7 @@ jobs:
     needs: [lint, protoc]
     steps:
       - uses: actions/checkout@v3
-      - name: set up go
-        uses: actions/setup-go@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
       - uses: actions/cache@v3
@@ -74,18 +70,14 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: install dependencies
-        run: go get -v -u ./...
-      - name: unit test
-        run: |
+      - run: go get -v -u ./...
+      - run: |
           go test -v ./... -covermode=count -coverprofile cover.out
-      - name: convert cover.out to cover.lcov
-        uses: jandelgado/gcov2lcov-action@v1.0.8
+      - uses: jandelgado/gcov2lcov-action@v1.0.8
         with:
           infile: cover.out
           outfile: cover.lcov
-      - name: coveralls publish
-        uses: coverallsapp/github-action@v1.1.2
+      - uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: cover.lcov
@@ -110,4 +102,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - run: go build -v ./...
+      - run: |
+          go get -v -u ./...
+          go build -v ./...
