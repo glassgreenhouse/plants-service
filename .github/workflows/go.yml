@@ -18,7 +18,6 @@ jobs:
   protoc:
     name: protobuf
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v3
       - name: set up go
@@ -60,7 +59,7 @@ jobs:
     strategy:
       matrix:
         go: [ "1.18", "1.17", "1.16" ]
-    needs: protoc
+    needs: [lint, protoc]
     steps:
       - uses: actions/checkout@v3
       - name: set up go
@@ -80,7 +79,7 @@ jobs:
       - name: coveralls publish
         uses: coverallsapp/github-action@v1.1.2
         with:
-          github-token: ${{ secrets.coveralls }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: cover.lcov
       - uses: actions/cache@v3
         with:
