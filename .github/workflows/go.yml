@@ -59,9 +59,11 @@ jobs:
     needs: [lint, protoc]
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -70,13 +72,20 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - run: go get -v -u ./...
-      - run: |
+
+      - name: dependencies
+        run: |
+          go get -v -u ./...
+
+      - name: test
+        run: |
           go test -v ./... -covermode=count -coverprofile cover.out
+
       - uses: jandelgado/gcov2lcov-action@v1.0.8
         with:
           infile: cover.out
           outfile: cover.lcov
+
       - uses: coverallsapp/github-action@v1.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -91,17 +100,63 @@ jobs:
     needs: [test]
     steps:
       - uses: actions/checkout@v3
+
       - uses: actions/setup-go@v3
         with:
           go-version: ${{ matrix.go }}
+
       - uses: actions/cache@v3
         with:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
+            ~/work/plants-service/plants-service/build
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - run: |
+
+      - name: dependencies
+        run: |
           go get -v -u ./...
-          go build -v ./...
+
+      - name: build
+        run: |
+          go build -a -v -o build/plant-service -mod=readonly .
+        env:
+          GOOS: linux 
+          GOARCH: amd64
+          CGO_ENABLED: 0 
+
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    needs: [build]
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: build-push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

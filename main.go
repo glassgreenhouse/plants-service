@@ -23,7 +23,7 @@ const (
 const (
 	reset  = "\033[0m"
 	purple = "\033[35m"
-	banner = `planet-service`
+	banner = `plant-service`
 )
 
 type Plant struct {
