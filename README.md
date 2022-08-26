@@ -100,3 +100,15 @@ protoc --proto_path=./infrastructure/proto \
     --grpc-gateway_opt paths=source_relative \
     infrastructure/proto/plant.proto
 ```
+protoc \
+    --proto_path=./infrastructure/proto \
+    --go_out=plugins=grpc:./infrastructure/proto \
+    --go_opt=paths=source_relative \
+    infrastructure/proto/plant.proto
+
+protoc --proto_path=./infrastructure/proto \
+    --go_out=./infrastructure/proto \
+    --go_opt=paths=source_relative \
+    --go-grpc_out=./infrastructure/proto \
+    --go-grpc_opt=paths=source_relative \
+    infrastructure/proto/plant.proto

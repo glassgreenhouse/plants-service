@@ -1,19 +1,19 @@
 {
   "name": "smart-garden:plant-service",
   "dockerFile": "Dockerfile",
-  // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
-    "ms-kubernetes-tools.vscode-kubernetes-tools",
-    "ms-kubernetes-tools.kind-vscode",
-    "ms-azuretools.vscode-docker",
-    "googlecloudtools.cloudcode",
-    "okteto.remote-kubernetes",
-    "esbenp.prettier-vscode",
-    "IBM.output-colorizer",
-    "ms-vscode.go",
-    "golang.go"
-  ],
-  // Set *default* container specific settings.json values on container create.
+	"ms-kubernetes-tools.vscode-kubernetes-tools",
+	"ms-kubernetes-tools.kind-vscode",
+	"ms-azuretools.vscode-docker",
+	"googlecloudtools.cloudcode",
+	"okteto.remote-kubernetes",
+	"esbenp.prettier-vscode",
+	"ibm.output-colorizer",
+	"zxh404.vscode-proto3",
+	"humao.rest-client",
+	"ms-vscode.go",
+	"golang.go",
+],
   "settings": {
     "go.toolsManagement.checkForUpdates": "local",
     "go.useLanguageServer": true,
@@ -26,12 +26,12 @@
       "label": "rest",
       "onAutoForward": "notify"
     },
-    "50051": {
-      "label": "gRPC",
-      "onAutoForward": "notify"
-    },
     "9090": {
       "label": "metrics",
+      "onAutoForward": "notify"
+    },
+    "50051": {
+      "label": "gRPC",
       "onAutoForward": "notify"
     }
   },
@@ -42,7 +42,6 @@
     "source=${env:HOME}/.skaffold,target=/home/vscode/.skaffold,type=bind",
     "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
   ],
-  // Uncomment to connect as a non-root user. More info: https://aka.ms/vscode-remote/containers/non-root.
   "remoteUser": "vscode",
   "overrideCommand": false,
   "runArgs": [

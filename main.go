@@ -1,102 +1,105 @@
 package main
 
 import (
-	"context"
-	"log"
+	"fmt"
+	stdlog "log"
 	"net"
-	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	// "net/http"
+
+	// "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"glassgreenhouse.io/plants-service/infrastructure/proto"
+	"glassgreenhouse.io/plants-service/infrastructure/transports"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/status"
+	// "google.golang.org/grpc/credentials/insecure"
 )
 
 const (
 	port    = ":50051"
 	webPort = ":8080"
+	banner = `starting plant-service`
 )
 
-const (
-	reset  = "\033[0m"
-	purple = "\033[35m"
-	banner = `plant-service`
-)
+func main() {	
+	logger := log.NewJSONLogger(log.NewSyncWriter(os.Stdout))
+	logger = level.NewFilter(logger, level.AllowInfo())
+	logger = log.With(logger, "ts", log.DefaultTimestampUTC)
+	logger = log.With(logger, "caller", log.DefaultCaller)
+	
+	stdlog.SetOutput(log.NewStdlibAdapter(logger))
 
-type Plant struct {
-	proto.UnimplementedPlantServer
-}
+	errs := make(chan error)
 
-type HealthCheck struct {
-	proto.UnimplementedPlantServer
-}
+	go func() {
+		c := make(chan os.Signal)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGALRM)
+		errs <- fmt.Errorf("%s", <-c)
+	}()
 
-func (g *Plant) Hello(ctx context.Context, req *proto.HelloRequest) (*proto.HelloResponse, error) {
-	log.Printf("Received: %v", req.GetName())
-	return &proto.HelloResponse{Greeting: "Hello " + req.Name}, nil
-}
-
-func (s *HealthCheck) Check(ctx context.Context, in *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
-	log.Printf("Received: %v", in.GetService())
-	return &grpc_health_v1.HealthCheckResponse{Status: grpc_health_v1.HealthCheckResponse_SERVING}, nil
-}
-
-func (s *HealthCheck) Watch(in *grpc_health_v1.HealthCheckRequest, _ grpc_health_v1.Health_WatchServer) error {
-	return status.Error(codes.Unimplemented, "unimplemented")
-}
-
-func main() {
 	lis, err := net.Listen("tcp", port)
 
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		level.Error(logger).Log("failed to listen: %v", err)
+		os.Exit(1)
 	}
 
-	service := grpc.NewServer()
+	stdlog.Print(banner)
 
-	proto.RegisterPlantServer(service, &Plant{})
-
-	grpc_health_v1.RegisterHealthServer(service, &HealthCheck{})
-
-	log.Print(purple + banner + reset)
-	log.Printf("High performance, minimalist Go for %v", lis.Addr())
+	plantsServer := transports.NewPlantsServer(logger)
+	healthCheckServer := transports.NewHealthCheck(logger)
 
 	go func() {
+		service := grpc.NewServer()
+		proto.RegisterPlantsServer(service, plantsServer)
+		grpc_health_v1.RegisterHealthServer(service, healthCheckServer)
+		stdlog.Printf("High performance, minimalist Go for %v", lis.Addr())
+		level.Info(logger).Log("msg", "Server started successfully 🚀")
 		if err := service.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", lis.Addr())
+			level.Error(logger).Log("failed to serve: %v", lis.Addr())
 		}
 	}()
 
+	level.Error(logger).Log("exit", <-errs)
+
+	// go func() {
+	// if err := service.Serve(lis); err != nil {
+	// 	log.Fatalf("failed to serve: %v", lis.Addr())
+	// }
+	// }()
+
 	// Create a client connection to the gRPC server we just started
 	// This is where the gRPC-Gateway proxies the requests
-	conn, err := grpc.DialContext(
-		context.Background(), 
-		"0.0.0.0"+port, 
-		grpc.WithBlock(), 
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	// conn, err := grpc.DialContext(
+	// 	context.Background(),
+	// 	"0.0.0.0"+port,
+	// 	grpc.WithBlock(),
+	// 	grpc.WithTransportCredentials(insecure.NewCredentials()),
+	// )
 
-	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
-	}
+	// if err != nil {
+	// 	log.Fatalln("Failed to dial server:", err)
+	// }
 
-	gwmux := runtime.NewServeMux()
+	// gwmux := runtime.NewServeMux()
 
-	if err := proto.RegisterPlantHandler(context.Background(), gwmux, conn); err != nil {
-		log.Fatalln("Failed to register gateway:", err)
-	}
+	// if err := proto.RegisterPlantHandler(context.Background(), gwmux, conn); err != nil {
+	// 	log.Fatalln("Failed to register gateway:", err)
+	// }
 
-	gwServer := &http.Server{
-		Addr:    webPort,
-		Handler: gwmux,
-	}
+	// gwServer := &http.Server{
+	// 	Addr:    webPort,
+	// 	Handler: gwmux,
+	// }
 
-	log.Println("serving gRPC-Gateway on http://0.0.0.0" + webPort)
+	// log.Println("serving gRPC-Gateway on http://0.0.0.0" + webPort)
 
-	if err := gwServer.ListenAndServe(); err != nil {
-		log.Fatalf("failed to serve: http://0.0.0.0%v", webPort)
-	}
+	// if err := gwServer.ListenAndServe(); err != nil {
+	// 	log.Fatalf("failed to serve: http://0.0.0.0%v", webPort)
+	// }
 }

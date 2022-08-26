@@ -14,7 +14,19 @@ deploy:
   kubectl:
     manifests:
       - ../.k8s/**
+    defaultNamespace: smart-garden
 profiles:
-- name: cloudbuild
-  build:
-    googleCloudBuild: {}
+  - name: cloudbuild
+    build:
+      googleCloudBuild: {}
+  - name: dev
+    build:
+      tagPolicy:
+        sha256: {}
+        envTemplate:
+          template: "{{.DOCKER_REGISTRY}}/plant-service:{{.DIGEST_HEX}}"     
+      artifacts:
+      - context: ../
+        image: "{{.DOCKER_REGISTRY}}/plant-service"
+        docker:
+          dockerfile: Dockerfile

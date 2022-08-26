@@ -13,6 +13,20 @@
             "cwd": "${workspaceFolder}"
         },
         {
+            "name": "run::skaffold:debug",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+            "host": "localhost",
+            "port": 56268,
+            "substitutePath": [
+                {
+                    "from": "${workspaceFolder}",
+                    "to": "/go",
+                },
+            ],
+        },
+        {
             "name": "kube::run",
             "type": "cloudcode.kubernetes",
             "request": "launch",
@@ -20,16 +34,16 @@
             "watch": false,
             "cleanUp": true,
             "portForward": true,
-            "imageRegistry": "registry:5000",
-            "debug": [
-                {
-                    "image": "plant-service",
-                    "containerName": "server",
-                    "sourceFileMap": {
-                        "${workspaceFolder}": "/build"
-                    }
-                }
-            ]
+            "imageRegistry": "registry:5000",            
+            // "debug": [
+            //     {
+            //         "image": "plant-service",
+            //         "containerName": "plant-service",
+            //         "sourceFileMap": {
+            //             "${workspaceFolder}": "."
+            //         }
+            //     }
+            // ]
         }
     ]
 }

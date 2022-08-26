@@ -14,86 +14,122 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// PlantClient is the client API for Plant service.
+// PlantsClient is the client API for Plants service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type PlantClient interface {
-	Hello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error)
+type PlantsClient interface {
+	NewPlant(ctx context.Context, in *NewPlantRequest, opts ...grpc.CallOption) (*Plant, error)
+	GetPlant(ctx context.Context, in *GetPlantRequest, opts ...grpc.CallOption) (*Plant, error)
 }
 
-type plantClient struct {
+type plantsClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewPlantClient(cc grpc.ClientConnInterface) PlantClient {
-	return &plantClient{cc}
+func NewPlantsClient(cc grpc.ClientConnInterface) PlantsClient {
+	return &plantsClient{cc}
 }
 
-func (c *plantClient) Hello(ctx context.Context, in *HelloRequest, opts ...grpc.CallOption) (*HelloResponse, error) {
-	out := new(HelloResponse)
-	err := c.cc.Invoke(ctx, "/Plant/Hello", in, out, opts...)
+func (c *plantsClient) NewPlant(ctx context.Context, in *NewPlantRequest, opts ...grpc.CallOption) (*Plant, error) {
+	out := new(Plant)
+	err := c.cc.Invoke(ctx, "/Plants/NewPlant", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// PlantServer is the server API for Plant service.
-// All implementations must embed UnimplementedPlantServer
+func (c *plantsClient) GetPlant(ctx context.Context, in *GetPlantRequest, opts ...grpc.CallOption) (*Plant, error) {
+	out := new(Plant)
+	err := c.cc.Invoke(ctx, "/Plants/GetPlant", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PlantsServer is the server API for Plants service.
+// All implementations must embed UnimplementedPlantsServer
 // for forward compatibility
-type PlantServer interface {
-	Hello(context.Context, *HelloRequest) (*HelloResponse, error)
-	mustEmbedUnimplementedPlantServer()
+type PlantsServer interface {
+	NewPlant(context.Context, *NewPlantRequest) (*Plant, error)
+	GetPlant(context.Context, *GetPlantRequest) (*Plant, error)
+	mustEmbedUnimplementedPlantsServer()
 }
 
-// UnimplementedPlantServer must be embedded to have forward compatible implementations.
-type UnimplementedPlantServer struct {
+// UnimplementedPlantsServer must be embedded to have forward compatible implementations.
+type UnimplementedPlantsServer struct {
 }
 
-func (UnimplementedPlantServer) Hello(context.Context, *HelloRequest) (*HelloResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Hello not implemented")
+func (UnimplementedPlantsServer) NewPlant(context.Context, *NewPlantRequest) (*Plant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NewPlant not implemented")
 }
-func (UnimplementedPlantServer) mustEmbedUnimplementedPlantServer() {}
+func (UnimplementedPlantsServer) GetPlant(context.Context, *GetPlantRequest) (*Plant, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPlant not implemented")
+}
+func (UnimplementedPlantsServer) mustEmbedUnimplementedPlantsServer() {}
 
-// UnsafePlantServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to PlantServer will
+// UnsafePlantsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to PlantsServer will
 // result in compilation errors.
-type UnsafePlantServer interface {
-	mustEmbedUnimplementedPlantServer()
+type UnsafePlantsServer interface {
+	mustEmbedUnimplementedPlantsServer()
 }
 
-func RegisterPlantServer(s grpc.ServiceRegistrar, srv PlantServer) {
-	s.RegisterService(&Plant_ServiceDesc, srv)
+func RegisterPlantsServer(s grpc.ServiceRegistrar, srv PlantsServer) {
+	s.RegisterService(&Plants_ServiceDesc, srv)
 }
 
-func _Plant_Hello_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HelloRequest)
+func _Plants_NewPlant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(NewPlantRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PlantServer).Hello(ctx, in)
+		return srv.(PlantsServer).NewPlant(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/Plant/Hello",
+		FullMethod: "/Plants/NewPlant",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PlantServer).Hello(ctx, req.(*HelloRequest))
+		return srv.(PlantsServer).NewPlant(ctx, req.(*NewPlantRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Plant_ServiceDesc is the grpc.ServiceDesc for Plant service.
+func _Plants_GetPlant_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPlantRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PlantsServer).GetPlant(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Plants/GetPlant",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PlantsServer).GetPlant(ctx, req.(*GetPlantRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// Plants_ServiceDesc is the grpc.ServiceDesc for Plants service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Plant_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "Plant",
-	HandlerType: (*PlantServer)(nil),
+var Plants_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "Plants",
+	HandlerType: (*PlantsServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Hello",
-			Handler:    _Plant_Hello_Handler,
+			MethodName: "NewPlant",
+			Handler:    _Plants_NewPlant_Handler,
+		},
+		{
+			MethodName: "GetPlant",
+			Handler:    _Plants_GetPlant_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
