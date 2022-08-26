@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+option go_package = "github.com/glassgreenhouse/plants-service/infrastructure/proto";
+
+import "google/api/annotations.proto";
+
+service Plants {
+	rpc NewPlant(NewPlantRequest) returns (Plant) {
+		option (google.api.http) = {
+			post: "/v1/plants"
+			body: "plant"
+		};
+	}
+	rpc GetPlant (GetPlantRequest) returns (Plant) {
+		option (google.api.http) = {
+			get: "/v1/plants/{id}"
+		};
+	}
+}
+
+// A shelf resource.
+message Plant {
+	int64 id = 1;
+	string name = 2;
+  }
+
+message NewPlantRequest {
+	string name = 1;
+}
+
+message GetPlantRequest {
+	string name = 1;
+}

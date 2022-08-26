@@ -1,0 +1,32 @@
+# To learn more about the skaffold.yaml schema visit
+# https://skaffold.dev/docs/references/yaml/
+apiVersion: skaffold/v2beta28
+kind: Config
+build:
+  tagPolicy:
+    sha256: {}
+  artifacts:
+  - context: ../
+    image: plant-service
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+      - ../.k8s/**
+    defaultNamespace: smart-garden
+profiles:
+  - name: cloudbuild
+    build:
+      googleCloudBuild: {}
+  - name: dev
+    build:
+      tagPolicy:
+        sha256: {}
+        envTemplate:
+          template: "{{.DOCKER_REGISTRY}}/plant-service:{{.DIGEST_HEX}}"     
+      artifacts:
+      - context: ../
+        image: "{{.DOCKER_REGISTRY}}/plant-service"
+        docker:
+          dockerfile: Dockerfile

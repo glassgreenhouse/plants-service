@@ -1,0 +1,61 @@
+{
+  "name": "smart-garden:plant-service",
+  "dockerFile": "Dockerfile",
+  "extensions": [
+	"ms-kubernetes-tools.vscode-kubernetes-tools",
+	"ms-kubernetes-tools.kind-vscode",
+	"ms-azuretools.vscode-docker",
+	"googlecloudtools.cloudcode",
+	"okteto.remote-kubernetes",
+	"esbenp.prettier-vscode",
+	"ibm.output-colorizer",
+	"zxh404.vscode-proto3",
+	"humao.rest-client",
+	"ms-vscode.go",
+	"golang.go",
+],
+  "settings": {
+    "go.toolsManagement.checkForUpdates": "local",
+    "go.useLanguageServer": true,
+    "go.goroot": "/usr/local/go",
+    "go.gopath": "/go"
+  },
+  "postCreateCommand": "go mod download",
+  "portsAttributes": {
+    "8080": {
+      "label": "rest",
+      "onAutoForward": "notify"
+    },
+    "9090": {
+      "label": "metrics",
+      "onAutoForward": "notify"
+    },
+    "50051": {
+      "label": "gRPC",
+      "onAutoForward": "notify"
+    }
+  },
+  "mounts": [
+    "source=${env:HOME}/.go,target=/go,type=bind",
+    "source=${env:HOME}/.ssh,target=/home/vscode/.ssh,type=bind,ro",
+    "source=${env:HOME}/.kube,target=/home/vscode/.kube,type=bind,ro",
+    "source=${env:HOME}/.skaffold,target=/home/vscode/.skaffold,type=bind",
+    "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"
+  ],
+  "remoteUser": "vscode",
+  "overrideCommand": false,
+  "runArgs": [
+    "--init",
+    "--privileged",
+    "--cap-add=SYS_PTRACE",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--network=kind",
+    "--add-host=queiroz:172.17.0.1",
+    "--add-host=registry:172.17.0.1",
+    "--add-host=kubernetes.default.svc:172.17.0.1",
+    "--add-host=plants.api.smartgarden.io:172.17.0.1",
+    "--add-host=broker.api.smartgarden.io:172.17.0.1",
+    "--add-host=devices.api.smartgarden.io:172.17.0.1"
+  ]
+}
